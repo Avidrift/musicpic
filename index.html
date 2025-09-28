@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundHub - Reproductor Musical</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🎵</div>
+                <div class="logo-text">SoundHub</div>
+            </div>
+
+            <div class="nav-section">
+                <h3>Menú</h3>
+                <div class="nav-item active" onclick="showView('music')">
+                    <span>🏠</span>
+                    <span>Inicio</span>
+                </div>
+                <div class="nav-item" onclick="showView('chat')">
+                    <span>💬</span>
+                    <span>Chat Musical</span>
+                </div>
+            </div>
+
+            <div class="user-selector">
+                <div class="current-user">
+                    <div class="user-avatar-large">JP</div>
+                    <div class="user-name">JP</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="view-tabs">
+                    <div class="tab active" onclick="showView('music')">Música</div>
+                    <div class="tab" onclick="showView('chat')">Chat</div>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">JP</div>
+                    <span id="currentUsername">JP</span>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Music View -->
+                <div class="music-view" id="musicView">
+                    <div class="now-playing-card">
+                        <div class="album-art" id="albumArt">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23333'/%3E%3Ctext x='100' y='100' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='20' fill='%23999'%3ESelecciona una canción%3C/text%3E%3C/svg%3E" alt="Album Art" id="albumImage">
+                        </div>
+                        <div class="song-details">
+                            <div class="song-title" id="songTitle">Selecciona una canción</div>
+                            <div class="artist-name" id="artistName">Artista</div>
+                            <div class="progress-container">
+                                <div class="time-row">
+                                    <span id="currentTime">0:00</span>
+                                    <span id="duration">0:00</span>
+                                </div>
+                                <div class="progress-bar" onclick="seekTo(event)">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                            </div>
+                            <div class="description" id="description">
+                                Descripción de la canción aparecerá aquí...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de búsqueda -->
+                    <div class="search-section">
+                        <div class="search-container">
+                            <input type="text" class="search-input" id="searchInput" placeholder="Buscar canciones, artistas..." oninput="searchMusic()" onkeypress="handleSearchKeyPress(event)">
+                            <span class="search-icon">🔍</span>
+                        </div>
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+
+                    <div class="playlist-section">
+                        <h2 class="section-title">Tu Biblioteca</h2>
+                        <div class="song-list" id="songList"></div>
+                    </div>
+                </div>
+
+                <!-- Chat View -->
+                <div class="chat-view" id="chatView">
+                    <div class="chat-header">
+                        <div class="chat-title">Chat Musical 🎵</div>
+                        <div class="online-users" id="onlineUsers"></div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-container">
+                        <div class="chat-input">
+                            <input type="text" id="messageInput" placeholder="Escribe un mensaje..." onkeypress="handleKeyPress(event)">
+                            <button class="input-btn" id="audioBtn" onclick="toggleAudioRecording()">🎤</button>
+                            <button class="input-btn" onclick="sendMessage()">➤</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Player Bar -->
+    <div class="player-bar">
+        <div class="mini-player">
+            <div class="mini-album">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%23333'/%3E%3C/svg%3E" alt="Mini Album" id="miniAlbum">
+            </div>
+            <div class="mini-info">
+                <div class="title" id="miniTitle">-</div>
+                <div class="artist" id="miniArtist">-</div>
+            </div>
+            <button class="like-btn" onclick="toggleLike()">♡</button>
+        </div>
+
+        <div class="player-controls">
+            <div class="control-buttons">
+                <button class="control-btn" onclick="toggleShuffle()">🔀</button>
+                <button class="control-btn" onclick="previousSong()">⏮</button>
+                <button class="control-btn play-btn" id="playBtn" onclick="togglePlayPause()">▶</button>
+                <button class="control-btn" onclick="nextSong()">⏭</button>
+                <button class="control-btn" onclick="toggleRepeat()">🔁</button>
+            </div>
+            <div class="player-progress">
+                <span class="time" id="playerCurrentTime">0:00</span>
+                <div class="progress-bar" onclick="seekTo(event)">
+                    <div class="progress-fill" id="playerProgressFill"></div>
+                </div>
+                <span class="time" id="playerDuration">0:00</span>
+            </div>
+        </div>
+
+        <div class="volume-section">
+            <button class="volume-btn" onclick="toggleMute()">🔊</button>
+            <div class="volume-slider" onclick="setVolume(event)">
+                <div class="volume-fill" id="volumeFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Biblioteca única de música
+        let musicLibrary = [];
+
+        // Mapeo de archivos reales a metadatos
+        const realSongsMapping = {
+            'Cartoon, Jéja - On & On (feat. Daniel Levi) _ Electronic Pop _ NCS - Copyright Free Music [K4DyBUG242c].mp3': {
+                title: 'On & On',
+                artist: 'Cartoon, Jéja feat. Daniel Levi',
+                description: 'Una melodía electrónica alegre y energética perfecta para levantar el ánimo.'
+            },
+            'Cartoon, Jéja - Why We Lose (feat. Coleman Trapp) _ DnB _ NCS - Copyright Free Music [zyXmsYwZqX4].mp3': {
+                title: 'Why We Lose',
+                artist: 'Cartoon, Jéja feat. Coleman Trapp',
+                description: 'Una composición emotiva que combina elementos electrónicos con una melodía reflexiva.'
+            },
+            'Different Heaven & EH_DE - My Heart _ Drumstep _ NCS - Copyright Free Music [jK2aIUmmdP4].mp3': {
+                title: 'My Heart',
+                artist: 'Different Heaven & EH!DE',
+                description: 'Un track electrónico vibrante con drops potentes y melodías pegajosas.'
+            },
+            'Disfigure - Blank _ Melodic Dubstep _ NCS - Copyright Free Music [p7ZsBPK6i5s].mp3': {
+                title: 'Blank',
+                artist: 'Disfigure',
+                description: 'Una pieza electrónica intensa con ritmos fuertes y sintetizadores modernos.'
+            },
+            'Spektrem - Shine _ Progressive House _ NCS - Copyright Free Music [n4tK7LYFxI0].mp3': {
+                title: 'Shine',
+                artist: 'Spektrem',
+                description: 'Un himno electrónico brillante que irradia energía positiva y melodías uplifting.'
+            }
+        };
+
+        // Función para cargar archivos reales
+        async function loadRealMusicFiles() {
+            console.log('Cargando archivos de música reales...');
+            
+            const availableSongs = [];
+            let songId = 1;
+
+            for (let [filename, metadata] of Object.entries(realSongsMapping)) {
+                try {
+                    const audioPath = `music/${filename}`;
+                    const response = await fetch(audioPath, { method: 'HEAD' });
+                    
+                    if (response.ok) {
+                        const song = {
+                            id: songId++,
+                            title: metadata.title,
+                            artist: metadata.artist,
+                            duration: '0:00',
+                            description: metadata.description,
+                            audioSrc: audioPath,
+                            albumArt: `https://via.placeholder.com/200?text=${encodeURIComponent(metadata.title)}`
+                        };
+                        availableSongs.push(song);
+                        console.log(`Archivo encontrado: ${filename}`);
+                    } else {
+                        console.warn(`Archivo no encontrado: ${filename}`);
+                    }
+                } catch (error) {
+                    console.error(`Error al verificar el archivo ${filename}:`, error);
+                }
+            }
+            musicLibrary = availableSongs;
+            renderSongList();
+            console.log('Archivos de música cargados:', musicLibrary);
+        }
+        loadRealMusicFiles();
+
+        // Variables globales
+        let currentSongIndex = null;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+        let isMuted = false;
+        let audio = new Audio();
+        let recording = false;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let username = 'JP';
+        const chatMessages = [];
+        const onlineUsers = new Set(['JP']);
+
+        // Elementos del DOM
+        const musicView = document.getElementById('musicView');
+        const chatView = document.getElementById('chatView');
+        const songList = document.getElementById('songList');
+        const albumArt = document.getElementById('albumArt');
+        const albumImage = document.getElementById('albumImage');
+        const songTitle = document.getElementById('songTitle');
+        const artistName = document.getElementById('artistName');
+        const description = document.getElementById('description');
+        const progressFill = document.getElementById('progressFill');
+        const currentTimeElem = document.getElementById('currentTime');
+        const durationElem = document.getElementById('duration');
+        const miniAlbum = document.getElementById('miniAlbum');
+        const miniTitle = document.getElementById('miniTitle');
+        const miniArtist = document.getElementById('miniArtist');
+        const likeBtn = document.querySelector('.like-btn');
+        const playBtn = document.getElementById('playBtn');
+
+        const playerCurrentTime = document.getElementById('playerCurrentTime');
+        const playerDuration = document.getElementById('playerDuration');
+        const playerProgressFill = document.getElementById('playerProgressFill');
+        const volumeFill = document.getElementById('volumeFill');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const chatMessagesContainer = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const onlineUsersContainer = document.getElementById('onlineUsers');
+        const audioBtn = document.getElementById('audioBtn');
+        const currentUsernameElem = document.getElementById('currentUsername');
+        const userAvatarElem = document.getElementById('userAvatar');
+        const navItems = document.querySelectorAll('.nav-item');
+        const tabs = document.querySelectorAll('.tab');
+        const userInitials = username.split(' ').map(n => n[0]).join('').toUpperCase();
+        userAvatarElem.textContent = userInitials;
+        currentUsernameElem.textContent = username;
+
+        // Función para mostrar la vista seleccionada
+        function showView(view) {
+            if (view === 'music') {
+                musicView.style.display = 'block';
+                chatView.style.display = 'none';
+            } else if (view === 'chat') {
+                musicView.style.display = 'none';
+                chatView.style.display = 'flex';
+            }
+
+            navItems.forEach(item => item.classList.remove('active'));
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            if (view === 'music') {
+                navItems[0].classList.add('active');
+                tabs[0].classList.add('active');
+            } else if (view === 'chat') {
+                navItems[1].classList.add('active');
+                tabs[1].classList.add('active');
+            }
+        }
+        showView('music');
+
+        // Función para renderizar la lista de canciones
+        function renderSongList() {
+            songList.innerHTML = '';
+            musicLibrary.forEach((song, index) => {
+                const songItem = document.createElement('div');
+                songItem.classList.add('song-item');
+                songItem.innerHTML = `
+                    <div class="song-number">${index + 1}</div>
+                    <div class="song-thumb
+">
+                        <img src="${song.albumArt}" alt="${song.title}">
+                    </div>
+                    <div class="song-info">
+                        <div class="title">${song.title}</div>
+                        <div class="artist">${song.artist}</div>
+                    </div>
+                    <div class="song-duration">${song.duration}</div>
+                `;
+                songItem.onclick = () => selectSong(index);
+                songList.appendChild(songItem);
+            });
+        }
+
+        </script>
+</body>
