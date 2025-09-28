@@ -1,36 +1,823 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoundHub - Reproductor Musical</title>
-    <link rel="stylesheet" href="style.css">
+    <title>MusicPic - Music Chat Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1db954;
+            --dark-bg: #121212;
+            --darker-bg: #000000;
+            --card-bg: #181818;
+            --hover-bg: #282828;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Login Modal */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-form {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 32px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--hover-bg);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-option.selected {
+            border-color: var(--text-primary);
+            transform: scale(1.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary-color);
+            color: var(--darker-bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--darker-bg);
+            padding: 24px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), #1ed760);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .nav-section h3 {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            padding: 0 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: var(--darker-bg);
+        }
+
+        .user-selector {
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 8px;
+        }
+
+        .current-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 2px solid var(--primary-color);
+        }
+
+        .user-avatar-large {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--darker-bg);
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--dark-bg);
+        }
+
+        .top-bar {
+            height: 60px;
+            background: var(--card-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 24px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: var(--darker-bg);
+        }
+
+        .tab:not(.active) {
+            color: var(--text-secondary);
+        }
+
+        .tab:not(.active):hover {
+            color: var(--text-primary);
+            background: var(--hover-bg);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--darker-bg);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+        }
+
+        /* Music View */
+        .music-view {
+            display: block;
+        }
+
+        .now-playing-card {
+            background: linear-gradient(135deg, var(--card-bg), var(--hover-bg));
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .album-art {
+            width: 200px;
+            height: 200px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .album-art img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .song-details {
+            flex: 1;
+        }
+
+        .song-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .artist-name {
+            font-size: 24px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .progress-container {
+            margin-bottom: 16px;
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .playlist-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .song-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .song-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .song-item.active {
+            background: rgba(29, 185, 84, 0.1);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .song-number {
+            width: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .song-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 4px;
+            background: var(--hover-bg);
+            overflow: hidden;
+        }
+
+        .song-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .song-info {
+            flex: 1;
+        }
+
+        .song-info .title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .song-info .artist {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .song-duration {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Chat View */
+        .chat-view {
+            display: none;
+            flex-direction: column;
+            height: calc(100vh - 220px);
+        }
+
+        .chat-header {
+            background: var(--card-bg);
+            padding: 20px 24px;
+            border-radius: 16px 16px 0 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .online-users {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .online-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            border-radius: 16px;
+            background: var(--hover-bg);
+        }
+
+        .online-user-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .online-user-name {
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            background: var(--card-bg);
+        }
+
+        .message {
+            margin-bottom: 16px;
+            max-width: 70%;
+        }
+
+        .message.sent {
+            margin-left: auto;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .message-user {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-left: auto;
+        }
+
+        .message-content {
+            background: var(--hover-bg);
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.4;
+        }
+
+        .message.sent .message-content {
+            color: var(--darker-bg);
+        }
+
+        .chat-input-container {
+            padding: 20px 24px;
+            background: var(--card-bg);
+            border-radius: 0 0 16px 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .chat-input input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .input-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary-color);
+            color: var(--darker-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .input-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Player Bar */
+        .player-bar {
+            height: 100px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 24px;
+        }
+
+        .mini-player {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 300px;
+        }
+
+        .mini-album {
+            width: 56px;
+            height: 56px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .mini-album img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mini-info .title {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .mini-info .artist {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .player-controls {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .control-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            color: var(--text-primary);
+            transform: scale(1.1);
+        }
+
+        .play-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-color);
+            color: var(--darker-bg);
+        }
+
+        .play-btn:hover {
+            background: #1ed760;
+            transform: scale(1.05);
+        }
+
+        .player-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .volume-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 150px;
+        }
+
+        .volume-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 2px;
+            width: 70%;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .song-title {
+                font-size: 32px;
+            }
+            
+            .now-playing-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
+    <!-- Login Modal -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-form">
+            <h2 class="login-title">Welcome to MusicPic</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Choose your nickname</label>
+                    <input type="text" class="form-input" id="nicknameInput" placeholder="Enter your nickname" maxlength="20" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pick your color</label>
+                    <div class="color-picker" id="colorPicker">
+                        <div class="color-option selected" data-color="#1db954" style="background: #1db954;"></div>
+                        <div class="color-option" data-color="#ff6b6b" style="background: #ff6b6b;"></div>
+                        <div class="color-option" data-color="#4ecdc4" style="background: #4ecdc4;"></div>
+                        <div class="color-option" data-color="#45b7d1" style="background: #45b7d1;"></div>
+                        <div class="color-option" data-color="#f9ca24" style="background: #f9ca24;"></div>
+                        <div class="color-option" data-color="#f0932b" style="background: #f0932b;"></div>
+                        <div class="color-option" data-color="#eb4d4b" style="background: #eb4d4b;"></div>
+                        <div class="color-option" data-color="#6c5ce7" style="background: #6c5ce7;"></div>
+                        <div class="color-option" data-color="#a29bfe" style="background: #a29bfe;"></div>
+                        <div class="color-option" data-color="#fd79a8" style="background: #fd79a8;"></div>
+                        <div class="color-option" data-color="#00b894" style="background: #00b894;"></div>
+                        <div class="color-option" data-color="#00cec9" style="background: #00cec9;"></div>
+                    </div>
+                </div>
+                <button type="submit" class="login-btn">Join MusicPic</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="logo">
                 <div class="logo-icon">🎵</div>
-                <div class="logo-text">SoundHub</div>
+                <div class="logo-text">MusicPic</div>
             </div>
 
             <div class="nav-section">
-                <h3>Menú</h3>
+                <h3>Menu</h3>
                 <div class="nav-item active" onclick="showView('music')">
                     <span>🏠</span>
-                    <span>Inicio</span>
+                    <span>Home</span>
                 </div>
                 <div class="nav-item" onclick="showView('chat')">
                     <span>💬</span>
-                    <span>Chat Musical</span>
+                    <span>Music Chat</span>
+                </div>
+                <div class="nav-item">
+                    <span>📚</span>
+                    <span>Your Library</span>
                 </div>
             </div>
 
             <div class="user-selector">
                 <div class="current-user">
-                    <div class="user-avatar-large">JP</div>
-                    <div class="user-name">JP</div>
+                    <div class="user-avatar-large" id="currentUserAvatar"></div>
+                    <div class="user-name" id="currentUserName"></div>
                 </div>
             </div>
         </nav>
@@ -39,12 +826,12 @@
         <main class="main-content">
             <div class="top-bar">
                 <div class="view-tabs">
-                    <div class="tab active" onclick="showView('music')">Música</div>
+                    <div class="tab active" onclick="showView('music')">Music</div>
                     <div class="tab" onclick="showView('chat')">Chat</div>
                 </div>
                 <div class="user-info">
-                    <div class="user-avatar" id="userAvatar">JP</div>
-                    <span id="currentUsername">JP</span>
+                    <div class="user-avatar" id="topUserAvatar"></div>
+                    <span id="topUserName"></span>
                 </div>
             </div>
 
@@ -53,11 +840,11 @@
                 <div class="music-view" id="musicView">
                     <div class="now-playing-card">
                         <div class="album-art" id="albumArt">
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23333'/%3E%3Ctext x='100' y='100' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='20' fill='%23999'%3ESelecciona una canción%3C/text%3E%3C/svg%3E" alt="Album Art" id="albumImage">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23333'/%3E%3Ctext x='100' y='100' text-anchor='middle' dy='0.35em' font-family='Arial' font-size='20' fill='%23999'%3ESelect a song%3C/text%3E%3C/svg%3E" alt="Album Art" id="albumImage">
                         </div>
                         <div class="song-details">
-                            <div class="song-title" id="songTitle">Selecciona una canción</div>
-                            <div class="artist-name" id="artistName">Artista</div>
+                            <div class="song-title" id="songTitle">Select a song</div>
+                            <div class="artist-name" id="artistName">Artist</div>
                             <div class="progress-container">
                                 <div class="time-row">
                                     <span id="currentTime">0:00</span>
@@ -68,22 +855,13 @@
                                 </div>
                             </div>
                             <div class="description" id="description">
-                                Descripción de la canción aparecerá aquí...
+                                Song description will appear here...
                             </div>
                         </div>
                     </div>
 
-                    <!-- Barra de búsqueda -->
-                    <div class="search-section">
-                        <div class="search-container">
-                            <input type="text" class="search-input" id="searchInput" placeholder="Buscar canciones, artistas..." oninput="searchMusic()" onkeypress="handleSearchKeyPress(event)">
-                            <span class="search-icon">🔍</span>
-                        </div>
-                        <div class="search-results" id="searchResults"></div>
-                    </div>
-
                     <div class="playlist-section">
-                        <h2 class="section-title">Tu Biblioteca</h2>
+                        <h2 class="section-title">Your Library</h2>
                         <div class="song-list" id="songList"></div>
                     </div>
                 </div>
@@ -91,14 +869,15 @@
                 <!-- Chat View -->
                 <div class="chat-view" id="chatView">
                     <div class="chat-header">
-                        <div class="chat-title">Chat Musical 🎵</div>
+                        <div class="chat-title">Music Chat</div>
                         <div class="online-users" id="onlineUsers"></div>
+                        <button class="input-btn" onclick="refreshChat()" title="Refresh Chat" style="margin-top: 8px;">🔄</button>
                     </div>
                     <div class="chat-messages" id="chatMessages"></div>
                     <div class="chat-input-container">
                         <div class="chat-input">
-                            <input type="text" id="messageInput" placeholder="Escribe un mensaje..." onkeypress="handleKeyPress(event)">
-                            <button class="input-btn" id="audioBtn" onclick="toggleAudioRecording()">🎤</button>
+                            <input type="text" id="messageInput" placeholder="Write a message..." onkeypress="handleKeyPress(event)">
+                            <button class="input-btn" onclick="shareCurrentSong()">🎵</button>
                             <button class="input-btn" onclick="sendMessage()">➤</button>
                         </div>
                     </div>
@@ -108,7 +887,7 @@
     </div>
 
     <!-- Player Bar -->
-    <div class="player-bar">
+    <div class="player-bar" id="playerBar" style="display: none;">
         <div class="mini-player">
             <div class="mini-album">
                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%23333'/%3E%3C/svg%3E" alt="Mini Album" id="miniAlbum">
@@ -117,16 +896,13 @@
                 <div class="title" id="miniTitle">-</div>
                 <div class="artist" id="miniArtist">-</div>
             </div>
-            <button class="like-btn" onclick="toggleLike()">♡</button>
         </div>
 
         <div class="player-controls">
             <div class="control-buttons">
-                <button class="control-btn" onclick="toggleShuffle()">🔀</button>
                 <button class="control-btn" onclick="previousSong()">⏮</button>
                 <button class="control-btn play-btn" id="playBtn" onclick="togglePlayPause()">▶</button>
                 <button class="control-btn" onclick="nextSong()">⏭</button>
-                <button class="control-btn" onclick="toggleRepeat()">🔁</button>
             </div>
             <div class="player-progress">
                 <span class="time" id="playerCurrentTime">0:00</span>
@@ -146,41 +922,489 @@
     </div>
 
     <script>
-        // Biblioteca única de música
-        let musicLibrary = [];
+        // Supabase configuration
+        const SUPABASE_URL = 'https://pmdicldnsufqekqzcean.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZGljbGRuc3VmcWVrcXpjZWFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwOTQ0NzEsImV4cCI6MjA3NDY3MDQ3MX0.dFNdE1yRi5JP0OOnY5eUirO45Ke7Lsq73BkTeY-hPpQ';
+        
+        // Initialize Supabase client
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Mapeo de archivos reales a metadatos
+        // Global variables
+        let currentUser = null;
+        let musicLibrary = [];
+        let currentSongIndex = null;
+        let isPlaying = false;
+        let audio = new Audio();
+        let messagesSubscription = null;
+        let usersSubscription = null;
+
+        // Music file mapping
         const realSongsMapping = {
             'Cartoon, Jéja - On & On (feat. Daniel Levi) _ Electronic Pop _ NCS - Copyright Free Music [K4DyBUG242c].mp3': {
                 title: 'On & On',
                 artist: 'Cartoon, Jéja feat. Daniel Levi',
-                description: 'Una melodía electrónica alegre y energética perfecta para levantar el ánimo.'
+                description: 'An upbeat electronic melody perfect for lifting your spirits.'
             },
             'Cartoon, Jéja - Why We Lose (feat. Coleman Trapp) _ DnB _ NCS - Copyright Free Music [zyXmsYwZqX4].mp3': {
                 title: 'Why We Lose',
                 artist: 'Cartoon, Jéja feat. Coleman Trapp',
-                description: 'Una composición emotiva que combina elementos electrónicos con una melodía reflexiva.'
+                description: 'An emotional composition that combines electronic elements with a reflective melody.'
             },
             'Different Heaven & EH_DE - My Heart _ Drumstep _ NCS - Copyright Free Music [jK2aIUmmdP4].mp3': {
                 title: 'My Heart',
                 artist: 'Different Heaven & EH!DE',
-                description: 'Un track electrónico vibrante con drops potentes y melodías pegajosas.'
+                description: 'A vibrant electronic track with powerful drops and catchy melodies.'
             },
             'Disfigure - Blank _ Melodic Dubstep _ NCS - Copyright Free Music [p7ZsBPK6i5s].mp3': {
                 title: 'Blank',
                 artist: 'Disfigure',
-                description: 'Una pieza electrónica intensa con ritmos fuertes y sintetizadores modernos.'
+                description: 'An intense electronic piece with strong rhythms and modern synthesizers.'
             },
             'Spektrem - Shine _ Progressive House _ NCS - Copyright Free Music [n4tK7LYFxI0].mp3': {
                 title: 'Shine',
                 artist: 'Spektrem',
-                description: 'Un himno electrónico brillante que irradia energía positiva y melodías uplifting.'
+                description: 'A bright electronic anthem that radiates positive energy and uplifting melodies.'
             }
         };
 
-        // Función para cargar archivos reales
+        // DOM Elements
+        const loginModal = document.getElementById('loginModal');
+        const appContainer = document.getElementById('appContainer');
+        const playerBar = document.getElementById('playerBar');
+        const loginForm = document.getElementById('loginForm');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const colorPicker = document.getElementById('colorPicker');
+        const musicView = document.getElementById('musicView');
+        const chatView = document.getElementById('chatView');
+        const songList = document.getElementById('songList');
+        const chatMessages = document.getElementById('chatMessages');
+        const onlineUsers = document.getElementById('onlineUsers');
+        const messageInput = document.getElementById('messageInput');
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Loaded, initializing MusicPic...');
+            setupColorPicker();
+            setupLoginForm();
+            loadMusicFiles();
+        });
+
+        // Setup color picker functionality
+        function setupColorPicker() {
+            const colorOptions = document.querySelectorAll('.color-option');
+            colorOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    colorOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                });
+            });
+        }
+
+        // Setup login form
+        function setupLoginForm() {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleLogin();
+            });
+        }
+
+        // Handle user login
+        async function handleLogin() {
+            console.log('=== INICIANDO LOGIN ===');
+            const nickname = nicknameInput.value.trim();
+            const selectedColorElement = document.querySelector('.color-option.selected');
+            
+            console.log('Nickname:', nickname);
+            console.log('Selected color element:', selectedColorElement);
+            
+            if (!selectedColorElement) {
+                alert('Please select a color');
+                return;
+            }
+            
+            const selectedColor = selectedColorElement.dataset.color;
+            console.log('Selected color:', selectedColor);
+
+            if (!nickname) {
+                alert('Please enter a nickname');
+                return;
+            }
+
+            if (nickname.length < 2) {
+                alert('Nickname must be at least 2 characters long');
+                return;
+            }
+
+            try {
+                console.log('Verificando si el nickname ya existe...');
+                // Check if nickname is already taken
+                const { data: existingUser, error: checkError } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('nickname', nickname)
+                    .single();
+
+                if (checkError && checkError.code !== 'PGRST116') {
+                    console.error('Error checking existing user:', checkError);
+                    throw checkError;
+                }
+
+                if (existingUser) {
+                    alert('This nickname is already taken. Please choose another one.');
+                    return;
+                }
+
+                console.log('Nickname disponible, creando usuario...');
+                // Create new user
+                const { data: newUser, error } = await supabaseClient
+                    .from('users')
+                    .insert({
+                        nickname: nickname,
+                        color: selectedColor,
+                        is_online: true
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Database error:', error);
+                    throw error;
+                }
+
+                console.log('Usuario creado exitosamente:', newUser);
+                currentUser = newUser;
+                updateUserTheme(selectedColor);
+                initializeApp();
+
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Error logging in: ' + (error.message || 'Please check your Supabase configuration'));
+            }
+        }
+
+        // Update user theme with selected color
+        function updateUserTheme(color) {
+            console.log('Actualizando tema del usuario con color:', color);
+            document.documentElement.style.setProperty('--primary-color', color);
+            
+            // Update user avatars
+            const avatars = [
+                document.getElementById('currentUserAvatar'),
+                document.getElementById('topUserAvatar')
+            ];
+            
+            avatars.forEach(avatar => {
+                if (avatar) {
+                    avatar.style.backgroundColor = color;
+                    avatar.textContent = currentUser.nickname[0].toUpperCase();
+                }
+            });
+
+            // Update user names
+            const nameElements = [
+                document.getElementById('currentUserName'),
+                document.getElementById('topUserName')
+            ];
+            
+            nameElements.forEach(elem => {
+                if (elem) elem.textContent = currentUser.nickname;
+            });
+        }
+
+        // Initialize the main application
+        function initializeApp() {
+            console.log('Inicializando aplicación principal...');
+            loginModal.style.display = 'none';
+            appContainer.style.display = 'flex';
+            playerBar.style.display = 'flex';
+            
+            setupRealtimeSubscriptions();
+            loadOnlineUsers();
+            loadMessages();
+            showView('music');
+            console.log('Aplicación inicializada correctamente');
+        }
+
+        // Setup realtime subscriptions
+        function setupRealtimeSubscriptions() {
+            console.log('Configurando suscripciones en tiempo real...');
+            try {
+                // Subscribe to new messages
+                messagesSubscription = supabaseClient
+                    .channel('messages')
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'messages'
+                    }, (payload) => {
+                        console.log('Nuevo mensaje recibido:', payload);
+                        displayMessage(payload.new);
+                    })
+                    .subscribe();
+
+                // Subscribe to user changes
+                usersSubscription = supabaseClient
+                    .channel('users')
+                    .on('postgres_changes', {
+                        event: '*',
+                        schema: 'public',
+                        table: 'users'
+                    }, () => {
+                        console.log('Cambio en usuarios detectado');
+                        loadOnlineUsers();
+                    })
+                    .subscribe();
+            } catch (error) {
+                console.warn('Las suscripciones en tiempo real fallaron, usando modo de actualización manual:', error);
+                setupManualRefresh();
+            }
+        }
+
+        // Setup manual refresh as fallback
+        function setupManualRefresh() {
+            console.log('Configurando actualización manual cada 5 segundos...');
+            setInterval(() => {
+                if (document.querySelector('#chatView').style.display === 'flex') {
+                    loadMessages();
+                    loadOnlineUsers();
+                }
+            }, 5000);
+        }
+
+        // Load online users
+        async function loadOnlineUsers() {
+            console.log('Cargando usuarios en línea...');
+            try {
+                const { data: users, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('is_online', true)
+                    .order('created_at');
+
+                if (error) {
+                    console.error('Error loading users:', error);
+                    return;
+                }
+
+                console.log('Usuarios cargados:', users);
+                displayOnlineUsers(users || []);
+            } catch (error) {
+                console.error('Error loading online users:', error);
+            }
+        }
+
+        // Display online users
+        function displayOnlineUsers(users) {
+            onlineUsers.innerHTML = '';
+            users.forEach(user => {
+                const userElement = document.createElement('div');
+                userElement.className = 'online-user';
+                userElement.innerHTML = `
+                    <div class="online-user-avatar" style="background-color: ${user.color}; color: #000;">
+                        ${user.nickname[0].toUpperCase()}
+                    </div>
+                    <div class="online-user-name">${user.nickname}</div>
+                `;
+                onlineUsers.appendChild(userElement);
+            });
+        }
+
+        // Load chat messages
+        async function loadMessages() {
+            console.log('Cargando mensajes del chat...');
+            try {
+                const { data: messages, error } = await supabaseClient
+                    .from('messages')
+                    .select(`
+                        *,
+                        users (nickname, color)
+                    `)
+                    .order('created_at')
+                    .limit(50);
+
+                if (error) {
+                    console.error('Error loading messages:', error);
+                    return;
+                }
+
+                console.log('Mensajes cargados:', messages);
+                chatMessages.innerHTML = '';
+                messages?.forEach(message => displayMessage(message));
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        // Display a message in the chat
+        function displayMessage(message) {
+            console.log('Mostrando mensaje:', message);
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            const isOwnMessage = message.user_id === currentUser?.id;
+            if (isOwnMessage) messageDiv.classList.add('sent');
+
+            // Handle user data - it might come from different sources
+            let user;
+            if (message.users) {
+                user = message.users;
+            } else {
+                // Fallback for realtime messages
+                user = { nickname: 'User', color: '#999999' };
+            }
+            
+            const time = new Date(message.created_at).toLocaleTimeString([], {
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+
+            let messageContent = message.content;
+            if (message.message_type === 'music_share' && message.metadata) {
+                messageContent = `🎵 Now playing: ${message.metadata.title} by ${message.metadata.artist}`;
+            }
+
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <div class="message-avatar" style="background-color: ${user.color}; color: #000;">
+                        ${user.nickname[0].toUpperCase()}
+                    </div>
+                    <div class="message-user">${user.nickname}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+                <div class="message-content" ${isOwnMessage ? `style="background-color: ${user.color};"` : ''}>
+                    ${messageContent}
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Send a message
+        async function sendMessage() {
+            console.log('=== FUNCIÓN SEND MESSAGE LLAMADA ===');
+            
+            // Basic diagnostics
+            console.log('Current user:', currentUser);
+            console.log('Message input element:', messageInput);
+            console.log('Supabase client:', supabaseClient);
+            
+            if (!currentUser) {
+                console.error('ERROR: No hay usuario logueado');
+                alert('Error: No user logged in');
+                return;
+            }
+            
+            if (!messageInput) {
+                console.error('ERROR: Elemento de input no encontrado');
+                alert('Error: Message input not found');
+                return;
+            }
+            
+            const content = messageInput.value.trim();
+            console.log('Contenido del mensaje:', content);
+            
+            if (!content) {
+                console.log('No se puede enviar: mensaje vacío');
+                return;
+            }
+
+            console.log('Intentando enviar mensaje:', content);
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('messages')
+                    .insert({
+                        user_id: currentUser.id,
+                        content: content,
+                        message_type: 'text'
+                    })
+                    .select();
+
+                if (error) {
+                    console.error('Error enviando mensaje:', error);
+                    alert('Error sending message: ' + error.message);
+                    return;
+                }
+
+                console.log('Mensaje enviado exitosamente:', data);
+                messageInput.value = '';
+                
+                // Reload messages to show the new message
+                setTimeout(() => {
+                    loadMessages();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error de red enviando mensaje:', error);
+                alert('Network error sending message: ' + error.message);
+            }
+        }
+
+        // Share current song
+        async function shareCurrentSong() {
+            console.log('=== COMPARTIR CANCIÓN ===');
+            if (!currentUser || currentSongIndex === null) {
+                console.log('No se puede compartir: no hay usuario o canción seleccionada');
+                return;
+            }
+
+            const currentSong = musicLibrary[currentSongIndex];
+            if (!currentSong) {
+                console.log('No se puede compartir: no hay datos de la canción actual');
+                return;
+            }
+
+            console.log('Compartiendo canción:', currentSong);
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('messages')
+                    .insert({
+                        user_id: currentUser.id,
+                        content: `Sharing: ${currentSong.title} by ${currentSong.artist}`,
+                        message_type: 'music_share',
+                        metadata: {
+                            title: currentSong.title,
+                            artist: currentSong.artist
+                        }
+                    })
+                    .select();
+
+                if (error) {
+                    console.error('Error compartiendo canción:', error);
+                    alert('Error sharing song: ' + error.message);
+                    return;
+                }
+
+                console.log('Canción compartida exitosamente:', data);
+                
+                // Reload messages to show the new message
+                setTimeout(() => {
+                    loadMessages();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error de red compartiendo canción:', error);
+                alert('Network error sharing song: ' + error.message);
+            }
+        }
+
+        // Handle key press in message input
+        function handleKeyPress(event) {
+            console.log('Tecla presionada:', event.key);
+            if (event.key === 'Enter') {
+                console.log('Enter detectado, llamando sendMessage()');
+                sendMessage();
+            }
+        }
+
+        // Load music files
         async function loadRealMusicFiles() {
-            console.log('Cargando archivos de música reales...');
+            console.log('Cargando archivos de música...');
             
             const availableSongs = [];
             let songId = 1;
@@ -198,106 +1422,35 @@
                             duration: '0:00',
                             description: metadata.description,
                             audioSrc: audioPath,
-                            albumArt: `https://via.placeholder.com/200?text=${encodeURIComponent(metadata.title)}`
+                            albumArt: `https://via.placeholder.com/200x200/333/999?text=${encodeURIComponent(metadata.title)}`
                         };
                         availableSongs.push(song);
                         console.log(`Archivo encontrado: ${filename}`);
-                    } else {
-                        console.warn(`Archivo no encontrado: ${filename}`);
                     }
                 } catch (error) {
-                    console.error(`Error al verificar el archivo ${filename}:`, error);
+                    console.error(`Error verificando archivo ${filename}:`, error);
                 }
             }
             musicLibrary = availableSongs;
             renderSongList();
-            console.log('Archivos de música cargados:', musicLibrary);
         }
-        loadRealMusicFiles();
 
-        // Variables globales
-        let currentSongIndex = null;
-        let isPlaying = false;
-        let isShuffle = false;
-        let isRepeat = false;
-        let isMuted = false;
-        let audio = new Audio();
-        let recording = false;
-        let mediaRecorder;
-        let recordedChunks = [];
-        let username = 'JP';
-        const chatMessages = [];
-        const onlineUsers = new Set(['JP']);
-
-        // Elementos del DOM
-        const musicView = document.getElementById('musicView');
-        const chatView = document.getElementById('chatView');
-        const songList = document.getElementById('songList');
-        const albumArt = document.getElementById('albumArt');
-        const albumImage = document.getElementById('albumImage');
-        const songTitle = document.getElementById('songTitle');
-        const artistName = document.getElementById('artistName');
-        const description = document.getElementById('description');
-        const progressFill = document.getElementById('progressFill');
-        const currentTimeElem = document.getElementById('currentTime');
-        const durationElem = document.getElementById('duration');
-        const miniAlbum = document.getElementById('miniAlbum');
-        const miniTitle = document.getElementById('miniTitle');
-        const miniArtist = document.getElementById('miniArtist');
-        const likeBtn = document.querySelector('.like-btn');
-        const playBtn = document.getElementById('playBtn');
-
-        const playerCurrentTime = document.getElementById('playerCurrentTime');
-        const playerDuration = document.getElementById('playerDuration');
-        const playerProgressFill = document.getElementById('playerProgressFill');
-        const volumeFill = document.getElementById('volumeFill');
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
-        const chatMessagesContainer = document.getElementById('chatMessages');
-        const messageInput = document.getElementById('messageInput');
-        const onlineUsersContainer = document.getElementById('onlineUsers');
-        const audioBtn = document.getElementById('audioBtn');
-        const currentUsernameElem = document.getElementById('currentUsername');
-        const userAvatarElem = document.getElementById('userAvatar');
-        const navItems = document.querySelectorAll('.nav-item');
-        const tabs = document.querySelectorAll('.tab');
-        const userInitials = username.split(' ').map(n => n[0]).join('').toUpperCase();
-        userAvatarElem.textContent = userInitials;
-        currentUsernameElem.textContent = username;
-
-        // Función para mostrar la vista seleccionada
-        function showView(view) {
-            if (view === 'music') {
-                musicView.style.display = 'block';
-                chatView.style.display = 'none';
-            } else if (view === 'chat') {
-                musicView.style.display = 'none';
-                chatView.style.display = 'flex';
-            }
-
-            navItems.forEach(item => item.classList.remove('active'));
-            tabs.forEach(tab => tab.classList.remove('active'));
-
-            if (view === 'music') {
-                navItems[0].classList.add('active');
-                tabs[0].classList.add('active');
-            } else if (view === 'chat') {
-                navItems[1].classList.add('active');
-                tabs[1].classList.add('active');
-            }
+        function loadMusicFiles() {
+            loadRealMusicFiles();
         }
-        showView('music');
 
-        // Función para renderizar la lista de canciones
+        // Render song list
         function renderSongList() {
             songList.innerHTML = '';
             musicLibrary.forEach((song, index) => {
                 const songItem = document.createElement('div');
                 songItem.classList.add('song-item');
+                if (index === currentSongIndex) {
+                    songItem.classList.add('active');
+                }
                 songItem.innerHTML = `
                     <div class="song-number">${index + 1}</div>
-                    <div class="song-thumb
-">
+                    <div class="song-thumb">
                         <img src="${song.albumArt}" alt="${song.title}">
                     </div>
                     <div class="song-info">
@@ -311,5 +1464,238 @@
             });
         }
 
-        </script>
+        // Music player functions
+        function selectSong(index) {
+            if (musicLibrary[index]) {
+                currentSongIndex = index;
+                const song = musicLibrary[index];
+                
+                // Update displays
+                document.getElementById('albumImage').src = song.albumArt;
+                document.getElementById('songTitle').textContent = song.title;
+                document.getElementById('artistName').textContent = song.artist;
+                document.getElementById('description').textContent = song.description;
+                document.getElementById('miniAlbum').src = song.albumArt;
+                document.getElementById('miniTitle').textContent = song.title;
+                document.getElementById('miniArtist').textContent = song.artist;
+                
+                // Load audio
+                audio.src = song.audioSrc;
+                audio.load();
+                
+                renderSongList();
+                
+                if (isPlaying) {
+                    playAudio();
+                }
+            }
+        }
+
+        function playAudio() {
+            if (currentSongIndex !== null) {
+                audio.play().then(() => {
+                    isPlaying = true;
+                    document.getElementById('playBtn').innerHTML = '⏸';
+                }).catch(error => {
+                    console.error('Error playing audio:', error);
+                });
+            }
+        }
+
+        function pauseAudio() {
+            audio.pause();
+            isPlaying = false;
+            document.getElementById('playBtn').innerHTML = '▶';
+        }
+
+        function togglePlayPause() {
+            if (currentSongIndex === null && musicLibrary.length > 0) {
+                selectSong(0);
+            }
+            
+            if (isPlaying) {
+                pauseAudio();
+            } else {
+                playAudio();
+            }
+        }
+
+        function nextSong() {
+            if (musicLibrary.length === 0) return;
+            const nextIndex = (currentSongIndex + 1) % musicLibrary.length;
+            selectSong(nextIndex);
+        }
+
+        function previousSong() {
+            if (musicLibrary.length === 0) return;
+            const prevIndex = currentSongIndex === 0 ? musicLibrary.length - 1 : currentSongIndex - 1;
+            selectSong(prevIndex);
+        }
+
+        function seekTo(event) {
+            const progressBar = event.currentTarget;
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            const newTime = percent * audio.duration;
+            
+            if (!isNaN(newTime)) {
+                audio.currentTime = newTime;
+            }
+        }
+
+        function setVolume(event) {
+            const volumeSlider = event.currentTarget;
+            const rect = volumeSlider.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            
+            audio.volume = Math.max(0, Math.min(1, percent));
+            document.getElementById('volumeFill').style.width = (percent * 100) + '%';
+        }
+
+        function toggleMute() {
+            audio.muted = !audio.muted;
+            document.querySelector('.volume-btn').textContent = audio.muted ? '🔇' : '🔊';
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // View switching
+        function showView(view) {
+            console.log('Cambiando a vista:', view);
+            if (view === 'music') {
+                musicView.style.display = 'block';
+                chatView.style.display = 'none';
+            } else if (view === 'chat') {
+                musicView.style.display = 'none';
+                chatView.style.display = 'flex';
+            }
+
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+            if (view === 'music') {
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            } else if (view === 'chat') {
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            }
+        }
+
+        // Audio event listeners
+        audio.addEventListener('loadedmetadata', () => {
+            if (currentSongIndex !== null) {
+                const song = musicLibrary[currentSongIndex];
+                song.duration = formatTime(audio.duration);
+                document.getElementById('duration').textContent = song.duration;
+                document.getElementById('playerDuration').textContent = song.duration;
+                renderSongList();
+            }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('playerProgressFill').style.width = progress + '%';
+                
+                document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+                document.getElementById('playerCurrentTime').textContent = formatTime(audio.currentTime);
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            nextSong();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', async () => {
+            if (currentUser) {
+                await supabaseClient
+                    .from('users')
+                    .update({ is_online: false, last_seen: new Date() })
+                    .eq('id', currentUser.id);
+            }
+            
+            if (messagesSubscription) messagesSubscription.unsubscribe();
+            if (usersSubscription) usersSubscription.unsubscribe();
+        });
+
+        // Test functions for debugging
+        window.testChat = function() {
+            console.log('=== PRUEBA DE FUNCIONALIDAD DE CHAT ===');
+            console.log('Usuario actual:', currentUser);
+            console.log('Elemento messageInput:', messageInput);
+            console.log('Valor del input:', messageInput ? messageInput.value : 'INPUT NO ENCONTRADO');
+            console.log('Cliente Supabase:', supabaseClient);
+            
+            if (!currentUser) {
+                console.error('ERROR: No hay usuario logueado');
+                return false;
+            }
+            
+            if (!messageInput) {
+                console.error('ERROR: Elemento del input de mensaje no encontrado');
+                return false;
+            }
+            
+            console.log('Prueba básica EXITOSA');
+            return true;
+        };
+        
+        window.sendTestMessage = function() {
+            console.log('Enviando mensaje de prueba...');
+            messageInput.value = 'Mensaje de prueba desde consola';
+            sendMessage();
+        };
+
+        // Manual refresh function
+        function refreshChat() {
+            console.log('Actualizando chat manualmente...');
+            loadMessages();
+            loadOnlineUsers();
+        }
+
+        // Add debugging for Supabase
+        console.log('Verificando configuración de Supabase...');
+        console.log('SUPABASE_URL:', SUPABASE_URL);
+        console.log('SUPABASE_ANON_KEY existe:', !!SUPABASE_ANON_KEY);
+        
+        // Test Supabase connection
+        async function testSupabaseConnection() {
+            try {
+                console.log('Probando conexión con Supabase...');
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    console.error('Prueba de conexión con Supabase falló:', error);
+                    alert('Database connection failed. Please check your Supabase configuration.');
+                } else {
+                    console.log('Conexión con Supabase exitosa!');
+                }
+            } catch (error) {
+                console.error('Error de prueba de Supabase:', error);
+                alert('Please make sure to replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual Supabase credentials.');
+            }
+        }
+
+        // Test connection on load if credentials are provided
+        if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+            testSupabaseConnection();
+        } else {
+            console.warn('Por favor reemplaza las credenciales de Supabase en el código!');
+            alert('Please replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual Supabase credentials in the code.');
+        }
+
+        console.log('MusicPic inicializado exitosamente!');
+        console.log('Funciones de debug disponibles: testChat(), sendTestMessage()');
+    </script>
 </body>
+</html>
