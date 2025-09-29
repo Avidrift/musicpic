@@ -1123,8 +1123,17 @@
             loadOnlineUsers();
             loadMessages();
             showView('music');
+            
+            // 🔄 Refresh automático cada 5 segundos
+            setInterval(() => {
+                console.log('⏳ Refresh automático ejecutado');
+                loadOnlineUsers();
+                loadMessages();
+            }, 5000);
+
             console.log('Aplicación inicializada correctamente');
         }
+
 
         // Setup realtime subscriptions
         function setupRealtimeSubscriptions() {
