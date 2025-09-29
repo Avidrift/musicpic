@@ -1,10 +1,15 @@
 <!DOCTYPE html>
+<html lang="es">
+<head>
+
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MusicPic - Music Chat Platform</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         * {
             margin: 0;
@@ -31,7 +36,7 @@
             height: 100vh;
         }
 
-        /* Login Modal */
+        /* Modal de Login */
         .login-modal {
             position: fixed;
             top: 0;
@@ -127,12 +132,148 @@
             transform: translateY(-2px);
         }
 
+        /* Modal de Subida */
+        .upload-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .upload-form {
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .upload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .upload-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .file-input-container {
+            position: relative;
+            cursor: pointer;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .file-input-container:hover {
+            border-color: var(--primary-color);
+            background: var(--hover-bg);
+        }
+
+        .file-input-container.active {
+            border-color: var(--primary-color);
+            background: rgba(29, 185, 84, 0.1);
+        }
+
+        .file-input-container input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-text {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .file-info {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--hover-bg);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .file-info strong {
+            color: var(--primary-color);
+        }
+
+        .upload-progress {
+            margin: 20px 0;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .upload-btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary-color);
+            color: var(--darker-bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-btn-submit:hover:not(:disabled) {
+            background: #1ed760;
+            transform: translateY(-2px);
+        }
+
+        .upload-btn-submit:disabled {
+            background: var(--border-color);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .app-container {
             display: flex;
             height: 100vh;
         }
 
-        /* Sidebar */
+        /* Barra Lateral */
         .sidebar {
             width: 240px;
             background: var(--darker-bg);
@@ -232,7 +373,7 @@
             color: var(--text-primary);
         }
 
-        /* Main Content */
+        /* Contenido Principal */
         .main-content {
             flex: 1;
             display: flex;
@@ -301,7 +442,7 @@
             overflow-y: auto;
         }
 
-        /* Music View */
+        /* Vista de Música */
         .music-view {
             display: block;
         }
@@ -388,16 +529,54 @@
             padding: 24px;
         }
 
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
         .section-title {
             font-size: 24px;
             font-weight: bold;
-            margin-bottom: 20px;
+        }
+
+        .library-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .upload-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--primary-color);
+            color: var(--darker-bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-btn:hover {
+            background: #1ed760;
+            transform: translateY(-1px);
         }
 
         .song-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+
+        .loading-message {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+            font-style: italic;
         }
 
         .song-item {
@@ -408,6 +587,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
         }
 
         .song-item:hover {
@@ -459,7 +639,48 @@
             font-size: 14px;
         }
 
-        /* Chat View */
+        .song-actions {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .song-item:hover .song-actions {
+            opacity: 1;
+        }
+
+        .song-item:hover .song-duration {
+            opacity: 0;
+        }
+
+        .action-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-color);
+            color: var(--darker-bg);
+        }
+
+        .delete-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        /* Vista de Chat */
         .chat-view {
             display: none;
             flex-direction: column;
@@ -611,7 +832,7 @@
             transform: scale(1.05);
         }
 
-        /* Player Bar */
+        /* Barra del Reproductor */
         .player-bar {
             height: 100px;
             background: var(--card-bg);
@@ -808,10 +1029,7 @@
                     <span>💬</span>
                     <span>Music Chat</span>
                 </div>
-                <div class="nav-item">
-                    <span>📚</span>
-                    <span>Your Library</span>
-                </div>
+                
             </div>
 
             <div class="user-selector">
@@ -861,8 +1079,18 @@
                     </div>
 
                     <div class="playlist-section">
-                        <h2 class="section-title">Your Library</h2>
-                        <div class="song-list" id="songList"></div>
+                        <div class="section-header">
+                            <h2 class="section-title">Music Library</h2>
+                            <div class="library-controls">
+                                <button class="upload-btn" onclick="loadMusicLibrary()" title="Refresh from GitHub">
+                                    <span>🔄</span>
+                                    <span>Refresh</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="song-list" id="songList">
+                            <div class="loading-message" id="libraryLoading">Loading music library from GitHub...</div>
+                        </div>
                     </div>
                 </div>
 
@@ -871,7 +1099,6 @@
                     <div class="chat-header">
                         <div class="chat-title">Music Chat</div>
                         <div class="online-users" id="onlineUsers"></div>
-                        <button class="input-btn" onclick="refreshChat()" title="Refresh Chat" style="margin-top: 8px;">🔄</button>
                     </div>
                     <div class="chat-messages" id="chatMessages"></div>
                     <div class="chat-input-container">
@@ -930,6 +1157,11 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // GitHub configuration for music storage
+        const GITHUB_REPO = 'Avidrift/musicpic';
+        const MUSIC_FOLDER = 'music';
+        const GITHUB_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${MUSIC_FOLDER}`;
+
         // Global variables
         let currentUser = null;
         let musicLibrary = [];
@@ -938,35 +1170,6 @@
         let audio = new Audio();
         let messagesSubscription = null;
         let usersSubscription = null;
-
-        // Music file mapping
-        const realSongsMapping = {
-            'Cartoon, Jéja - On & On (feat. Daniel Levi) _ Electronic Pop _ NCS - Copyright Free Music [K4DyBUG242c].mp3': {
-                title: 'On & On',
-                artist: 'Cartoon, Jéja feat. Daniel Levi',
-                description: 'An upbeat electronic melody perfect for lifting your spirits.'
-            },
-            'Cartoon, Jéja - Why We Lose (feat. Coleman Trapp) _ DnB _ NCS - Copyright Free Music [zyXmsYwZqX4].mp3': {
-                title: 'Why We Lose',
-                artist: 'Cartoon, Jéja feat. Coleman Trapp',
-                description: 'An emotional composition that combines electronic elements with a reflective melody.'
-            },
-            'Different Heaven & EH_DE - My Heart _ Drumstep _ NCS - Copyright Free Music [jK2aIUmmdP4].mp3': {
-                title: 'My Heart',
-                artist: 'Different Heaven & EH!DE',
-                description: 'A vibrant electronic track with powerful drops and catchy melodies.'
-            },
-            'Disfigure - Blank _ Melodic Dubstep _ NCS - Copyright Free Music [p7ZsBPK6i5s].mp3': {
-                title: 'Blank',
-                artist: 'Disfigure',
-                description: 'An intense electronic piece with strong rhythms and modern synthesizers.'
-            },
-            'Spektrem - Shine _ Progressive House _ NCS - Copyright Free Music [n4tK7LYFxI0].mp3': {
-                title: 'Shine',
-                artist: 'Spektrem',
-                description: 'A bright electronic anthem that radiates positive energy and uplifting melodies.'
-            }
-        };
 
         // DOM Elements
         const loginModal = document.getElementById('loginModal');
@@ -984,7 +1187,7 @@
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM Loaded, initializing MusicPic...');
+            console.log('DOM loaded, initializing MusicPic...');
             setupColorPicker();
             setupLoginForm();
             loadMusicFiles();
@@ -1011,7 +1214,7 @@
 
         // Handle user login
         async function handleLogin() {
-            console.log('=== INICIANDO LOGIN ===');
+            console.log('=== STARTING LOGIN ===');
             const nickname = nicknameInput.value.trim();
             const selectedColorElement = document.querySelector('.color-option.selected');
             
@@ -1037,7 +1240,7 @@
             }
 
             try {
-                console.log('Verificando si el nickname ya existe...');
+                console.log('Checking if nickname already exists...');
                 // Check if nickname is already taken
                 const { data: existingUser, error: checkError } = await supabaseClient
                     .from('users')
@@ -1055,7 +1258,7 @@
                     return;
                 }
 
-                console.log('Nickname disponible, creando usuario...');
+                console.log('Nickname available, creating user...');
                 // Create new user
                 const { data: newUser, error } = await supabaseClient
                     .from('users')
@@ -1072,7 +1275,7 @@
                     throw error;
                 }
 
-                console.log('Usuario creado exitosamente:', newUser);
+                console.log('User created successfully:', newUser);
                 currentUser = newUser;
                 updateUserTheme(selectedColor);
                 initializeApp();
@@ -1085,7 +1288,7 @@
 
         // Update user theme with selected color
         function updateUserTheme(color) {
-            console.log('Actualizando tema del usuario con color:', color);
+            console.log('Updating user theme with color:', color);
             document.documentElement.style.setProperty('--primary-color', color);
             
             // Update user avatars
@@ -1114,7 +1317,7 @@
 
         // Initialize the main application
         function initializeApp() {
-            console.log('Inicializando aplicación principal...');
+            console.log('Initializing main application...');
             loginModal.style.display = 'none';
             appContainer.style.display = 'flex';
             playerBar.style.display = 'flex';
@@ -1124,20 +1327,19 @@
             loadMessages();
             showView('music');
             
-            // 🔄 Refresh automático cada 5 segundos
+            // Auto refresh every 5 seconds
             setInterval(() => {
-                console.log('⏳ Refresh automático ejecutado');
+                console.log('⏳ Auto refresh executed');
                 loadOnlineUsers();
                 loadMessages();
             }, 5000);
 
-            console.log('Aplicación inicializada correctamente');
+            console.log('Application initialized correctly');
         }
-
 
         // Setup realtime subscriptions
         function setupRealtimeSubscriptions() {
-            console.log('Configurando suscripciones en tiempo real...');
+            console.log('Setting up realtime subscriptions...');
             try {
                 // Subscribe to new messages
                 messagesSubscription = supabaseClient
@@ -1147,7 +1349,7 @@
                         schema: 'public',
                         table: 'messages'
                     }, (payload) => {
-                        console.log('Nuevo mensaje recibido:', payload);
+                        console.log('New message received:', payload);
                         displayMessage(payload.new);
                     })
                     .subscribe();
@@ -1160,19 +1362,19 @@
                         schema: 'public',
                         table: 'users'
                     }, () => {
-                        console.log('Cambio en usuarios detectado');
+                        console.log('User change detected');
                         loadOnlineUsers();
                     })
                     .subscribe();
             } catch (error) {
-                console.warn('Las suscripciones en tiempo real fallaron, usando modo de actualización manual:', error);
+                console.warn('Realtime subscriptions failed, using manual refresh mode:', error);
                 setupManualRefresh();
             }
         }
 
         // Setup manual refresh as fallback
         function setupManualRefresh() {
-            console.log('Configurando actualización manual cada 5 segundos...');
+            console.log('Setting up manual refresh every 5 seconds...');
             setInterval(() => {
                 if (document.querySelector('#chatView').style.display === 'flex') {
                     loadMessages();
@@ -1183,7 +1385,7 @@
 
         // Load online users
         async function loadOnlineUsers() {
-            console.log('Cargando usuarios en línea...');
+            console.log('Loading online users...');
             try {
                 const { data: users, error } = await supabaseClient
                     .from('users')
@@ -1196,7 +1398,7 @@
                     return;
                 }
 
-                console.log('Usuarios cargados:', users);
+                console.log('Users loaded:', users);
                 displayOnlineUsers(users || []);
             } catch (error) {
                 console.error('Error loading online users:', error);
@@ -1221,7 +1423,7 @@
 
         // Load chat messages
         async function loadMessages() {
-            console.log('Cargando mensajes del chat...');
+            console.log('Loading chat messages...');
             try {
                 const { data: messages, error } = await supabaseClient
                     .from('messages')
@@ -1237,7 +1439,7 @@
                     return;
                 }
 
-                console.log('Mensajes cargados:', messages);
+                console.log('Messages loaded:', messages);
                 chatMessages.innerHTML = '';
                 messages?.forEach(message => displayMessage(message));
                 chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1248,7 +1450,7 @@
 
         // Display a message in the chat
         function displayMessage(message) {
-            console.log('Mostrando mensaje:', message);
+            console.log('Displaying message:', message);
             
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
@@ -1294,7 +1496,7 @@
 
         // Send a message
         async function sendMessage() {
-            console.log('=== FUNCIÓN SEND MESSAGE LLAMADA ===');
+            console.log('=== SEND MESSAGE FUNCTION CALLED ===');
             
             // Basic diagnostics
             console.log('Current user:', currentUser);
@@ -1302,26 +1504,26 @@
             console.log('Supabase client:', supabaseClient);
             
             if (!currentUser) {
-                console.error('ERROR: No hay usuario logueado');
+                console.error('ERROR: No user logged in');
                 alert('Error: No user logged in');
                 return;
             }
             
             if (!messageInput) {
-                console.error('ERROR: Elemento de input no encontrado');
+                console.error('ERROR: Message input element not found');
                 alert('Error: Message input not found');
                 return;
             }
             
             const content = messageInput.value.trim();
-            console.log('Contenido del mensaje:', content);
+            console.log('Message content:', content);
             
             if (!content) {
-                console.log('No se puede enviar: mensaje vacío');
+                console.log('Cannot send: empty message');
                 return;
             }
 
-            console.log('Intentando enviar mensaje:', content);
+            console.log('Attempting to send message:', content);
 
             try {
                 const { data, error } = await supabaseClient
@@ -1334,12 +1536,12 @@
                     .select();
 
                 if (error) {
-                    console.error('Error enviando mensaje:', error);
+                    console.error('Error sending message:', error);
                     alert('Error sending message: ' + error.message);
                     return;
                 }
 
-                console.log('Mensaje enviado exitosamente:', data);
+                console.log('Message sent successfully:', data);
                 messageInput.value = '';
                 
                 // Reload messages to show the new message
@@ -1348,26 +1550,26 @@
                 }, 500);
                 
             } catch (error) {
-                console.error('Error de red enviando mensaje:', error);
+                console.error('Network error sending message:', error);
                 alert('Network error sending message: ' + error.message);
             }
         }
 
         // Share current song
         async function shareCurrentSong() {
-            console.log('=== COMPARTIR CANCIÓN ===');
+            console.log('=== SHARE SONG ===');
             if (!currentUser || currentSongIndex === null) {
-                console.log('No se puede compartir: no hay usuario o canción seleccionada');
+                console.log('Cannot share: no user or selected song');
                 return;
             }
 
             const currentSong = musicLibrary[currentSongIndex];
             if (!currentSong) {
-                console.log('No se puede compartir: no hay datos de la canción actual');
+                console.log('Cannot share: no current song data');
                 return;
             }
 
-            console.log('Compartiendo canción:', currentSong);
+            console.log('Sharing song:', currentSong);
 
             try {
                 const { data, error } = await supabaseClient
@@ -1384,12 +1586,12 @@
                     .select();
 
                 if (error) {
-                    console.error('Error compartiendo canción:', error);
+                    console.error('Error sharing song:', error);
                     alert('Error sharing song: ' + error.message);
                     return;
                 }
 
-                console.log('Canción compartida exitosamente:', data);
+                console.log('Song shared successfully:', data);
                 
                 // Reload messages to show the new message
                 setTimeout(() => {
@@ -1397,66 +1599,99 @@
                 }, 500);
                 
             } catch (error) {
-                console.error('Error de red compartiendo canción:', error);
+                console.error('Network error sharing song:', error);
                 alert('Network error sharing song: ' + error.message);
             }
         }
 
         // Handle key press in message input
         function handleKeyPress(event) {
-            console.log('Tecla presionada:', event.key);
+            console.log('Key pressed:', event.key);
             if (event.key === 'Enter') {
-                console.log('Enter detectado, llamando sendMessage()');
+                console.log('Enter detected, calling sendMessage()');
                 sendMessage();
             }
         }
 
-        // Load music files
-        async function loadRealMusicFiles() {
-            console.log('Cargando archivos de música...');
+        // Load music library from GitHub
+        async function loadMusicLibrary() {
+            console.log('Loading music library from GitHub...');
+            document.getElementById('libraryLoading').style.display = 'block';
             
-            const availableSongs = [];
-            let songId = 1;
-
-            for (let [filename, metadata] of Object.entries(realSongsMapping)) {
-                try {
-                    const audioPath = `music/${filename}`;
-                    const response = await fetch(audioPath, { method: 'HEAD' });
-                    
-                    if (response.ok) {
-                        const song = {
-                            id: songId++,
-                            title: metadata.title,
-                            artist: metadata.artist,
-                            duration: '0:00',
-                            description: metadata.description,
-                            audioSrc: audioPath,
-                            albumArt: `https://via.placeholder.com/200x200/333/999?text=${encodeURIComponent(metadata.title)}`
-                        };
-                        availableSongs.push(song);
-                        console.log(`Archivo encontrado: ${filename}`);
-                    }
-                } catch (error) {
-                    console.error(`Error verificando archivo ${filename}:`, error);
+            try {
+                // Get list of files from GitHub API
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${MUSIC_FOLDER}`);
+                const files = await response.json();
+                
+                if (!Array.isArray(files)) {
+                    throw new Error('Failed to load music files from GitHub');
                 }
+                
+                // Filter audio files
+                const audioFiles = files.filter(file => 
+                    file.name.match(/\.(mp3|wav|ogg|m4a)$/i) && file.type === 'file'
+                );
+                
+                // Process files into songs
+                musicLibrary = audioFiles.map((file, index) => {
+                    const fileName = file.name.replace(/\.[^/.]+$/, "");
+                    
+                    // Try to parse "Artist - Title" format
+                    let title = fileName;
+                    let artist = 'Unknown Artist';
+                    
+                    if (fileName.includes(' - ')) {
+                        const parts = fileName.split(' - ');
+                        artist = parts[0].trim();
+                        title = parts.slice(1).join(' - ').trim();
+                    }
+                    
+                    return {
+                        id: index + 1,
+                        title: title,
+                        artist: artist,
+                        duration: '0:00',
+                        description: `Audio file: ${file.name}`,
+                        audioSrc: `${GITHUB_RAW_URL}/${file.name}`,
+                        albumArt: `https://via.placeholder.com/200x200/333/999?text=${encodeURIComponent(title)}`,
+                        uploadedBy: null, // GitHub files don't have user ownership
+                        createdAt: new Date().toISOString(),
+                        filePath: file.name
+                    };
+                });
+                
+                console.log('Processed music library:', musicLibrary);
+                renderSongList();
+                document.getElementById('libraryLoading').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error loading music from GitHub:', error);
+                document.getElementById('libraryLoading').innerHTML = 
+                    '<div style="color: #e74c3c;">Error loading music library from GitHub. Check console for details.</div>';
             }
-            musicLibrary = availableSongs;
-            renderSongList();
         }
 
+        // Load music files (now loads from GitHub)
         function loadMusicFiles() {
-            loadRealMusicFiles();
+            loadMusicLibrary();
         }
 
         // Render song list
         function renderSongList() {
             songList.innerHTML = '';
+            
+            if (musicLibrary.length === 0) {
+                songList.innerHTML = '<div class="loading-message">No songs found in GitHub repository. Check your repo configuration.</div>';
+                return;
+            }
+
             musicLibrary.forEach((song, index) => {
                 const songItem = document.createElement('div');
                 songItem.classList.add('song-item');
                 if (index === currentSongIndex) {
                     songItem.classList.add('active');
                 }
+                
                 songItem.innerHTML = `
                     <div class="song-number">${index + 1}</div>
                     <div class="song-thumb">
@@ -1468,6 +1703,7 @@
                     </div>
                     <div class="song-duration">${song.duration}</div>
                 `;
+                
                 songItem.onclick = () => selectSong(index);
                 songList.appendChild(songItem);
             });
@@ -1574,7 +1810,7 @@
 
         // View switching
         function showView(view) {
-            console.log('Cambiando a vista:', view);
+            console.log('Switching to view:', view);
             if (view === 'music') {
                 musicView.style.display = 'block';
                 chatView.style.display = 'none';
@@ -1637,60 +1873,53 @@
 
         // Test functions for debugging
         window.testChat = function() {
-            console.log('=== PRUEBA DE FUNCIONALIDAD DE CHAT ===');
-            console.log('Usuario actual:', currentUser);
-            console.log('Elemento messageInput:', messageInput);
-            console.log('Valor del input:', messageInput ? messageInput.value : 'INPUT NO ENCONTRADO');
-            console.log('Cliente Supabase:', supabaseClient);
+            console.log('=== CHAT FUNCTIONALITY TEST ===');
+            console.log('Current user:', currentUser);
+            console.log('Message input element:', messageInput);
+            console.log('Input value:', messageInput ? messageInput.value : 'INPUT NOT FOUND');
+            console.log('Supabase client:', supabaseClient);
             
             if (!currentUser) {
-                console.error('ERROR: No hay usuario logueado');
+                console.error('ERROR: No user logged in');
                 return false;
             }
             
             if (!messageInput) {
-                console.error('ERROR: Elemento del input de mensaje no encontrado');
+                console.error('ERROR: Message input element not found');
                 return false;
             }
             
-            console.log('Prueba básica EXITOSA');
+            console.log('Basic test SUCCESSFUL');
             return true;
         };
         
         window.sendTestMessage = function() {
-            console.log('Enviando mensaje de prueba...');
-            messageInput.value = 'Mensaje de prueba desde consola';
+            console.log('Sending test message...');
+            messageInput.value = 'Test message from console';
             sendMessage();
         };
 
-        // Manual refresh function
-        function refreshChat() {
-            console.log('Actualizando chat manualmente...');
-            loadMessages();
-            loadOnlineUsers();
-        }
-
-        // Add debugging for Supabase
-        console.log('Verificando configuración de Supabase...');
+        // Debug for Supabase
+        console.log('Verifying Supabase configuration...');
         console.log('SUPABASE_URL:', SUPABASE_URL);
-        console.log('SUPABASE_ANON_KEY existe:', !!SUPABASE_ANON_KEY);
+        console.log('SUPABASE_ANON_KEY exists:', !!SUPABASE_ANON_KEY);
         
         // Test Supabase connection
         async function testSupabaseConnection() {
             try {
-                console.log('Probando conexión con Supabase...');
+                console.log('Testing Supabase connection...');
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('count', { count: 'exact', head: true });
                 
                 if (error) {
-                    console.error('Prueba de conexión con Supabase falló:', error);
+                    console.error('Supabase connection test failed:', error);
                     alert('Database connection failed. Please check your Supabase configuration.');
                 } else {
-                    console.log('Conexión con Supabase exitosa!');
+                    console.log('Supabase connection successful!');
                 }
             } catch (error) {
-                console.error('Error de prueba de Supabase:', error);
+                console.error('Supabase test error:', error);
                 alert('Please make sure to replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual Supabase credentials.');
             }
         }
@@ -1699,12 +1928,13 @@
         if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
             testSupabaseConnection();
         } else {
-            console.warn('Por favor reemplaza las credenciales de Supabase en el código!');
+            console.warn('Please replace the Supabase credentials in the code!');
             alert('Please replace SUPABASE_URL and SUPABASE_ANON_KEY with your actual Supabase credentials in the code.');
         }
 
-        console.log('MusicPic inicializado exitosamente!');
-        console.log('Funciones de debug disponibles: testChat(), sendTestMessage()');
+        console.log('MusicPic initialized successfully!');
+        console.log('Debug functions available: testChat(), sendTestMessage()');
+        console.log('Loading music from GitHub repository:', GITHUB_REPO);
     </script>
 </body>
 </html>
