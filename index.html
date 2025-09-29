@@ -2002,6 +2002,87 @@
         body:has(.desktop-player-bar[style*="flex"]) .content-area {
             height: calc(100vh - 60px - 90px);
         }
+
+
+                /* Search and Filters */
+        .search-filters {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            background: var(--hover-bg);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .clear-search:hover {
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        .artist-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--hover-bg);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            color: var(--darker-bg);
+            border-color: var(--primary-color);
+        }
+
+        .song-item.hidden {
+            display: none;
+        }
+
+
     </style>
     <meta name="google-site-verification" content="lsoHl8wlmbPpomqEMPnlVbXy8BC8LSJQXOI0lMglTJI" />
 </head>
@@ -2122,6 +2203,17 @@
                                 </button>
                             </div>
                         </div>
+
+                        <div class="search-filters">
+                            <div class="search-box">
+                                <input type="text" id="searchInput" class="search-input" placeholder="Search songs or artists..." oninput="filterSongs()">
+                                <button class="clear-search" onclick="clearSearch()">✕</button>
+                            </div>
+                            <button class="filter-btn" id="toggleFiltersBtn" onclick="toggleFilters()" style="margin-bottom: 12px;">▼ Show Filters</button>
+                            <div class="artist-filters" id="artistFilters" style="display: none;">
+                                <button class="filter-btn active" onclick="filterByArtist('all')">All</button>
+                            </div>
+                        </div>
                         <div class="song-list" id="songList">
                             <div class="loading-message" id="libraryLoading">Loading music library from GitHub...</div>
                         </div>
@@ -2218,6 +2310,8 @@
         let audio = new Audio();
         let messagesSubscription = null;
         let usersSubscription = null;
+        let activeArtistFilter = 'all';
+        let filtersVisible = false;    
 
         // DOM Elements
         const loginModal = document.getElementById('loginModal');
@@ -2706,11 +2800,17 @@
                 musicLibrary = audioFiles.map((file, index) => {
                     const fileName = file.name.replace(/\.[^/.]+$/, "");
                     
-                    // Try to parse "Artist - Title" format
                     let title = fileName;
                     let artist = 'Unknown Artist';
                     
-                    if (fileName.includes(' - ')) {
+                    // Primero intenta parsear formato "Título_Artista"
+                    if (fileName.includes('_')) {
+                        const lastUnderscoreIndex = fileName.lastIndexOf('_');
+                        title = fileName.substring(0, lastUnderscoreIndex).trim();
+                        artist = fileName.substring(lastUnderscoreIndex + 1).trim();
+                    }
+                    // Si no tiene guión bajo, intenta formato "Artist - Title"
+                    else if (fileName.includes(' - ')) {
                         const parts = fileName.split(' - ');
                         artist = parts[0].trim();
                         title = parts.slice(1).join(' - ').trim();
@@ -2724,12 +2824,11 @@
                         description: `Audio file: ${file.name}`,
                         audioSrc: `${GITHUB_RAW_URL}/${file.name}`,
                         albumArt: `https://via.placeholder.com/200x200/333/999?text=${encodeURIComponent(title)}`,
-                        uploadedBy: null, // GitHub files don't have user ownership
+                        uploadedBy: null,
                         createdAt: new Date().toISOString(),
                         filePath: file.name
                     };
                 });
-                
                 console.log('Processed music library:', musicLibrary);
                 renderSongList();
                 document.getElementById('libraryLoading').style.display = 'none';
@@ -2777,6 +2876,12 @@
                 songItem.onclick = () => selectSong(index);
                 songList.appendChild(songItem);
             });
+            
+            // Generar filtros de artistas después de renderizar
+            generateArtistFilters();
+            
+            // Aplicar filtros actuales si existen
+            applyAllFilters();
         }
 
         // Music player functions
@@ -3009,6 +3114,120 @@
         console.log('MusicPic initialized successfully!');
         console.log('Debug functions available: testChat(), sendTestMessage()');
         console.log('Loading music from GitHub repository:', GITHUB_REPO);
+
+        // Función para aplicar todos los filtros combinados
+        function applyAllFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const songItems = document.querySelectorAll('.song-item');
+            
+            songItems.forEach(item => {
+                const title = item.querySelector('.song-info .title').textContent.toLowerCase();
+                const artist = item.querySelector('.song-info .artist').textContent;
+                const artistLower = artist.toLowerCase();
+                
+                const matchesSearch = !searchTerm || title.includes(searchTerm) || artistLower.includes(searchTerm);
+                const matchesArtist = activeArtistFilter === 'all' || artist === activeArtistFilter;
+                
+                if (matchesSearch && matchesArtist) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        function filterSongs() {
+            applyAllFilters();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            activeArtistFilter = 'all';
+            filterSongs();
+            
+            if (filtersVisible) {
+                document.querySelectorAll('.artist-filters .filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                const allBtn = document.querySelector('.artist-filters .filter-btn');
+                if (allBtn) allBtn.classList.add('active');
+            }
+        }
+
+        function toggleFilters() {
+            filtersVisible = !filtersVisible;
+            const artistFilters = document.getElementById('artistFilters');
+            const toggleBtn = document.getElementById('toggleFiltersBtn');
+            
+            if (filtersVisible) {
+                artistFilters.style.display = 'flex';
+                toggleBtn.textContent = '▲ Hide Filters';
+                toggleBtn.classList.add('active');
+            } else {
+                artistFilters.style.display = 'none';
+                toggleBtn.textContent = '▼ Show Filters';
+                toggleBtn.classList.remove('active');
+            }
+        }
+
+        function filterByArtist(artist) {
+            activeArtistFilter = artist;
+            
+            document.querySelectorAll('.artist-filters .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            applyAllFilters();
+        }
+
+        function generateArtistFilters() {
+            const artistsSet = new Set();
+            
+            musicLibrary.forEach(song => {
+                artistsSet.add(song.artist);
+            });
+            
+            const artistFiltersContainer = document.getElementById('artistFilters');
+            artistFiltersContainer.innerHTML = '<button class="filter-btn active" onclick="filterByArtist(\'all\')">All</button>';
+            
+            Array.from(artistsSet).sort().forEach(artist => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = artist;
+                btn.onclick = function() {
+                    filterByArtist(artist);
+                };
+                artistFiltersContainer.appendChild(btn);
+            });
+            
+            artistFiltersContainer.style.display = 'none';
+}
+        // Función para generar botones de filtro de artistas
+        function generateArtistFilters() {
+            const artistsSet = new Set();
+            
+            // Recopilar todos los artistas únicos
+            musicLibrary.forEach(song => {
+                artistsSet.add(song.artist);
+            });
+            
+            const artistFiltersContainer = document.getElementById('artistFilters');
+            artistFiltersContainer.innerHTML = '<button class="filter-btn active" onclick="filterByArtist(\'all\')">All</button>';
+            
+            // Crear un botón para cada artista
+            Array.from(artistsSet).sort().forEach(artist => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = artist;
+                btn.onclick = function() {
+                    filterByArtist(artist);
+                };
+                artistFiltersContainer.appendChild(btn);
+            });
+        }
+
+
     </script>
 
 
