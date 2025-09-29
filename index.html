@@ -29,11 +29,12 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--dark-bg);
-            color: var(--text-primary);
-            overflow: hidden;
-            height: 100vh;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: var(--dark-bg);
+          color: var(--text-primary);
+          min-height: 100vh;
+          overflow-x: hidden;
+          overflow-y: auto;
         }
 
         /* Modal de Login */
@@ -269,8 +270,9 @@
         }
 
         .app-container {
-            display: flex;
-            height: 100vh;
+          display: flex;
+          min-height: 100vh;
+          flex-direction: row;
         }
 
         /* Barra Lateral */
@@ -282,7 +284,37 @@
             flex-direction: column;
             gap: 24px;
             min-width: 200px;
+            transition: left 0.3s, box-shadow 0.3s;
+            position: relative;
         }
+
+        /* Botón hamburguesa para móviles */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 2001;
+            width: 44px;
+            height: 44px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+        .hamburger span {
+            display: block;
+            width: 28px;
+            height: 4px;
+            background: var(--primary-color);
+            margin: 5px auto;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        
 
         .logo {
             display: flex;
@@ -1144,7 +1176,30 @@
         /* Very Small Mobile Devices */
         @media (max-width: 480px) {
             .sidebar {
-                padding: 8px;
+                position: fixed;
+                left: -100vw;
+                top: 0;
+                height: 100vh;
+                width: 80vw;
+                max-width: 320px;
+                min-width: 0;
+                z-index: 2000;
+                box-shadow: 2px 0 16px rgba(0,0,0,0.18);
+                padding: 24px 12px;
+                background: var(--darker-bg);
+                transition: left 0.3s, box-shadow 0.3s;
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .app-container {
+                flex-direction: column;
+            }
+            .main-content {
+                margin-left: 0 !important;
             }
             
             .logo-text {
@@ -1485,6 +1540,11 @@
     </style>
 </head>
 <body>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
     <!-- Login Modal -->
     <div class="login-modal" id="loginModal">
         <div class="login-form">
@@ -1654,6 +1714,20 @@
         </div>
 
     <script>
+        // Hamburguesa para mostrar/ocultar sidebar en móviles
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const sidebar = document.querySelector('.sidebar');
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+        // Cerrar sidebar al hacer click fuera en móviles
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 480) {
+                if (!sidebar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
         // Supabase configuration
         const SUPABASE_URL = 'https://pmdicldnsufqekqzcean.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZGljbGRuc3VmcWVrcXpjZWFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwOTQ0NzEsImV4cCI6MjA3NDY3MDQ3MX0.dFNdE1yRi5JP0OOnY5eUirO45Ke7Lsq73BkTeY-hPpQ';
