@@ -1869,6 +1869,7 @@
             });
         }
 
+
         // Handle user login
         async function handleLogin() {
             console.log('=== STARTING LOGIN ===');
@@ -1898,7 +1899,7 @@
 
             try {
                 console.log('Checking if nickname already exists...');
-                // Check if nickname is already taken
+                // Verificar si el nickname ya existe
                 const { data: existingUser, error: checkError } = await supabaseClient
                     .from('users')
                     .select('*')
@@ -1910,30 +1911,52 @@
                     throw checkError;
                 }
 
+                let user;
+                
                 if (existingUser) {
-                    alert('This nickname is already taken. Please choose another one.');
-                    return;
+                    // Usuario existe - actualizar color y marcar como online
+                    console.log('User exists, updating color and status...');
+                    const { data: updatedUser, error: updateError } = await supabaseClient
+                        .from('users')
+                        .update({
+                            color: selectedColor,
+                            is_online: true,
+                            last_seen: new Date().toISOString()
+                        })
+                        .eq('id', existingUser.id)
+                        .select()
+                        .single();
+
+                    if (updateError) {
+                        console.error('Error updating user:', updateError);
+                        throw updateError;
+                    }
+                    
+                    user = updatedUser;
+                    console.log('User updated successfully:', user);
+                } else {
+                    // Usuario nuevo - crear
+                    console.log('Nickname available, creating new user...');
+                    const { data: newUser, error: createError } = await supabaseClient
+                        .from('users')
+                        .insert({
+                            nickname: nickname,
+                            color: selectedColor,
+                            is_online: true
+                        })
+                        .select()
+                        .single();
+
+                    if (createError) {
+                        console.error('Error creating user:', createError);
+                        throw createError;
+                    }
+                    
+                    user = newUser;
+                    console.log('User created successfully:', user);
                 }
 
-                console.log('Nickname available, creating user...');
-                // Create new user
-                const { data: newUser, error } = await supabaseClient
-                    .from('users')
-                    .insert({
-                        nickname: nickname,
-                        color: selectedColor,
-                        is_online: true
-                    })
-                    .select()
-                    .single();
-
-                if (error) {
-                    console.error('Database error:', error);
-                    throw error;
-                }
-
-                console.log('User created successfully:', newUser);
-                currentUser = newUser;
+                currentUser = user;
                 updateUserTheme(selectedColor);
                 initializeApp();
 
@@ -1942,7 +1965,6 @@
                 alert('Error logging in: ' + (error.message || 'Please check your Supabase configuration'));
             }
         }
-
         // Update user theme with selected color
         function updateUserTheme(color) {
             console.log('Updating user theme with color:', color);
