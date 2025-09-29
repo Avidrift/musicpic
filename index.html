@@ -739,6 +739,7 @@
             display: none;
             flex-direction: column;
             height: calc(100vh - 160px); /* Ajustado para el player */
+
         }
 
         .chat-header {
@@ -847,6 +848,8 @@
             background: var(--card-bg);
             border-radius: 0 0 16px 16px;
             border-top: 1px solid var(--border-color);
+            position: relative;
+            z-index: 10;
         }
 
         .chat-input {
@@ -958,6 +961,7 @@
             
             .chat-view {
                 height: calc(100vh - 180px);
+                padding-bottom: 70px; /* Espacio para el player */
             }
             
             .chat-header {
@@ -1119,6 +1123,11 @@
             .sidebar.open {
                 left: 0;
             }
+
+            /* Ocultar el top-bar en móviles */
+            .top-bar {
+                display: none;
+            }
             
             .hamburger {
                 display: flex;
@@ -1134,11 +1143,6 @@
             
             .logo-text {
                 font-size: 16px;
-            }
-            
-            .top-bar {
-                height: 50px;
-                padding: 0 12px;
             }
             
             .view-tabs {
@@ -1162,6 +1166,7 @@
             
             .content-area {
                 padding: 12px;
+                height: calc(100vh - 64px);
             }
             
             .now-playing-card {
@@ -1263,17 +1268,35 @@
                 height: 3px;
             }
             
-            body:has(.desktop-player-bar[style*="flex"]) .content-area {
-                height: calc(100vh - 50px - 64px);
+            /* Ajustar chat-view sin el top-bar */
+            .chat-view {
+                height: calc(100vh - 64px);
             }
             
-            .chat-view {
-                height: calc(100vh - 50px - 64px);
+            /* Si hay player activo, ajustar las alturas */
+            body:has(.desktop-player-bar[style*="flex"]) .content-area {
+                height: calc(100vh - 64px);
+            }
+            
+            body:has(.desktop-player-bar[style*="flex"]) .chat-view {
+                height: calc(100vh - 64px);
             }
         }
 
         /* Mobile muy pequeño (360px y menos) */
         @media (max-width: 360px) {
+            .top-bar {
+                display: none;
+            }
+            
+            .content-area {
+                height: calc(100vh - 60px);
+            }
+            
+            .chat-view {
+                height: calc(100vh - 60px);
+            }
+            
             .desktop-player-bar {
                 height: 60px;
                 padding: 0 6px;
@@ -1638,7 +1661,8 @@
             }
             
             .chat-view {
-                height: calc(100vh - 50px - 56px);
+                height: calc(100vh - 50px - 64px);
+                padding-bottom: 60px; /* Espacio para el player */
             }
             
             /* Hacer el now-playing-card más compacto */
